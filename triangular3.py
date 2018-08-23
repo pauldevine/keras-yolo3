@@ -47,7 +47,7 @@ class Triangular3Scheduler(Callback):
                  steps_per_epoch,
                  lr_decay=1,
                  cycle_length=10,
-                 upward_ratio=0.1
+                 upward_ratio=0.1,
                  mult_factor=1):
 
         self.min_lr = min_lr

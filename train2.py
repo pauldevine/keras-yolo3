@@ -12,7 +12,7 @@ from keras.utils import multi_gpu_model
 
 from yolo3.model import preprocess_true_boxes, yolo_body, tiny_yolo_body, yolo_loss
 from yolo3.utils import get_random_data
-from triangular3 import import Triangular3Scheduler
+from triangular3 import Triangular3Scheduler
 
 
 STAGE2_EPOCHS = 20
@@ -21,7 +21,8 @@ BATCH_SIZE_2 = 6
 
 def _main():
     annotation_path = 'train.txt'
-    log_dir = 'logs/000/'
+    log1_dir = 'logs/001/'
+    log2_dir = 'logs/002/'
     classes_path = 'model_data/openimgs_classes.txt'
     anchors_path = 'model_data/yolo_anchors.txt'
     class_names = get_classes(classes_path)
@@ -31,18 +32,7 @@ def _main():
     input_shape = (416,416) # multiple of 32, hw
 
     model = create_model(input_shape, anchors, num_classes,
-            freeze_body=2, weights_path=log_dir+'trained_weights_stage_2.h5')
-
-    batch_size = BATCH_SIZE_2
-    logging = TensorBoard(log_dir=log_dir)
-    checkpoint = ModelCheckpoint(log_dir + 'ep{epoch:03d}-loss{loss:.3f}-val_loss{val_loss:.3f}.h5',
-        monitor='val_loss', save_weights_only=True, save_best_only=True, period=1)
-    schedule = Triangular3Scheduler(min_lr=1e-8,
-                                    max_lr=1e-4,
-                                    steps_per_epoch=np.ceil(num_train/batch_size),
-                                    lr_decay=1.0,
-                                    cycle_length=1,
-                                    mult_factor=1)
+            freeze_body=2, weights_path=log1_dir+'trained_weights_stage_2.h5')
 
     val_split = 0.1
     with open(annotation_path) as f:
@@ -53,6 +43,17 @@ def _main():
     num_val = int(len(lines)*val_split)
     num_val = 10000 if num_val > 10000 else num_val
     num_train = len(lines) - num_val
+
+    batch_size = BATCH_SIZE_2
+    logging = TensorBoard(log_dir=log2_dir)
+    checkpoint = ModelCheckpoint(log2_dir + 'ep{epoch:03d}-loss{loss:.3f}-val_loss{val_loss:.3f}.h5',
+        monitor='val_loss', save_weights_only=True, save_best_only=True, period=1)
+    schedule = Triangular3Scheduler(min_lr=1e-8,
+                                    max_lr=1e-4,
+                                    steps_per_epoch=np.ceil(num_train/batch_size),
+                                    lr_decay=1.0,
+                                    cycle_length=1,
+                                    mult_factor=1)
 
     if True:
         for i in range(len(model.layers)):
@@ -68,7 +69,7 @@ def _main():
             epochs=STAGE2_EPOCHS,
             initial_epoch=0,
             callbacks=[logging, checkpoint, schedule])
-        model.save_weights(log_dir + 'trained_weights_final.h5')
+        model.save_weights(log2_dir + 'trained_weights_final.h5')
 
     # Further training if needed.
 

@@ -23,7 +23,7 @@ BATCH_SIZE_2 = 6
 
 def _main():
     annotation_path = 'train.txt'
-    log_dir = 'logs/000/'
+    log_dir = 'logs/001/'
     classes_path = 'model_data/openimgs_classes.txt'
     anchors_path = 'model_data/yolo_anchors.txt'
     class_names = get_classes(classes_path)
