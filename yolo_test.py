@@ -54,7 +54,7 @@ def submit_test_imgs(yolo):
             boxes = infer_img(yolo, img_path)
             f.write('{},'.format(os.path.splitext(jpg)[0]))
             # 1 record: [label, confidence, x_min, y_min, x_max, y_max]
-            box_strings = ['{:s} {:f} {:f} {:f} {:f} {:f}'.format(b[0], b[1], b[2], b[3], b[4], b[5]) for b in boxes]
+            box_strings = ['{:s} {:.4f} {:.4f} {:.4f} {:.4f} {:.4f}'.format(b[0], b[1], b[2], b[3], b[4], b[5]) for b in boxes]
             if box_strings:
                 f.write(' '.join(box_strings))
             f.write('\n')
