@@ -13,9 +13,8 @@ from keras.models import load_model
 from keras.layers import Input
 from PIL import Image, ImageFont, ImageDraw
 
-from yolo3.model import yolo_eval, yolo_body, tiny_yolo_body
+from yolo3.model import yolo_eval, yolo_body
 from yolo3.utils import letterbox_image
-import os
 from keras.utils import multi_gpu_model
 
 class YOLO(object):
@@ -81,8 +80,7 @@ class YOLO(object):
         try:
             self.yolo_model = load_model(model_path, compile=False)
         except:
-            self.yolo_model = tiny_yolo_body(Input(shape=(None,None,3)), num_anchors//2, num_classes) \
-                if is_tiny_version else yolo_body(Input(shape=(None,None,3)), num_anchors//3, num_classes)
+            self.yolo_model = yolo_body(Input(shape=(None,None,3)), num_anchors//3, num_classes)
             ### print(self.yolo_model.summary())
             self.yolo_model.load_weights(self.model_path) # make sure model, anchors and classes match
         else:
@@ -114,17 +112,24 @@ class YOLO(object):
 
     def infer_image(self, image):
         '''Infer an image and return all inferred bounding boxes with
-        confidence value as a list.
+        the corresponding confidence scores as a list.
 
-        Input:
-          image - a PIL image object
+        # Arguments
+          image: a PIL image object
+
+        # Output
+          ret: a list of inferred bounding boxes. Each bounding box is
+               represented as a list as well in the following format:
+               [label, confidence, x_min, y_min, x_max, y_max], where
+               all x's and y's are scaled between 0 and 1 relative to
+               width and height of the input image.
         '''
         assert self.model_image_size[0]%32 == 0, 'Multiples of 32 required'
         assert self.model_image_size[1]%32 == 0, 'Multiples of 32 required'
         boxed_image = letterbox_image(image, tuple(reversed(self.model_image_size)))
         image_data = np.array(boxed_image, dtype='float32')
 
-        print(image_data.shape)
+        #print(image_data.shape)
         image_data /= 255.
         image_data = np.expand_dims(image_data, 0)  # Add batch dimension.
 
@@ -138,16 +143,24 @@ class YOLO(object):
 
         print('Found {} boxes for {}'.format(len(out_boxes), 'img'))
 
-        out_list = []
+        h = float(image.height)
+        w = float(image.width)
+        ret = []
         for i, c in reversed(list(enumerate(out_classes))):
-            predicted_class = self.class_codes[c]
+            cls = self.class_codes[c]
             box = out_boxes[i]
             score = out_scores[i]
 
-            top, left, bottom, right = box
-            ### TO-DO: out_list.append(XXX)
+            y_min, x_min, y_max, x_max = box
+            y_min = max(0.0, y_min) / h
+            x_min = max(0.0, x_min) / w
+            y_max = min(  h, y_max) / h
+            x_max = min(  w, x_max) / w
 
-        return out_list
+            # 1 record: [label, confidence, x_min, y_min, x_max, y_max]
+            ret.append([cls, score, x_min, y_min, x_max, y_max])
+
+        return ret
 
     def detect_image(self, image):
         start = timer()
