@@ -8,8 +8,10 @@ logs/
 __pycache__/
 *.py[cod]
 *$py.class
-.*.swp 
+.*.swp
+
 kaggle*.txt
 train.txt
 VOCdevkit
 open-images-dataset
+*.csv
