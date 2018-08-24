@@ -41,6 +41,11 @@ if __name__ == '__main__':
         help='path to model weight file, default ' + YOLO.get_defaults("model_path")
     )
 
+    parser.add_argument(
+        '--score', type=float,
+        help='score (confidence) threshold, default ' + str(YOLO.get_defaults("score"))
+    )
+
     FLAGS = parser.parse_args()
 
     print("Image detection mode")

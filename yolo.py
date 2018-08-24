@@ -24,7 +24,9 @@ class YOLO(object):
         "model_path": 'logs/002/trained_weights_final.h5',
         "anchors_path": 'model_data/yolo_anchors.txt',
         "classes_path": 'model_data/openimgs_classes.txt',
-        "score" : 0.3,
+        "codes_path": 'model_data/openimgs_codes.txt',
+        #"score" : 0.3,
+        "score" : 0.001,
         "iou" : 0.45,
         "model_image_size" : (416, 416),
         "gpu_num" : 1,
@@ -41,6 +43,8 @@ class YOLO(object):
         self.__dict__.update(self._defaults) # set up default values
         self.__dict__.update(kwargs) # and update with user overrides
         self.class_names = self._get_class()
+        self.class_codes = self._get_codes()
+        assert len(self.class_names) == len(self.class_codes)
         self.anchors = self._get_anchors()
         self.sess = K.get_session()
         self.boxes, self.scores, self.classes = self.generate()
@@ -51,6 +55,13 @@ class YOLO(object):
             class_names = f.readlines()
         class_names = [c.strip() for c in class_names]
         return class_names
+
+    def _get_codes(self):
+        codes_path = os.path.expanduser(self.codes_path)
+        with open(codes_path) as f:
+            class_codes = f.readlines()
+        class_codes = [c.strip() for c in class_codes]
+        return class_codes
 
     def _get_anchors(self):
         anchors_path = os.path.expanduser(self.anchors_path)
@@ -100,6 +111,43 @@ class YOLO(object):
                 len(self.class_names), self.input_image_shape,
                 score_threshold=self.score, iou_threshold=self.iou)
         return boxes, scores, classes
+
+    def infer_image(self, image):
+        '''Infer an image and return all inferred bounding boxes with
+        confidence value as a list.
+
+        Input:
+          image - a PIL image object
+        '''
+        assert self.model_image_size[0]%32 == 0, 'Multiples of 32 required'
+        assert self.model_image_size[1]%32 == 0, 'Multiples of 32 required'
+        boxed_image = letterbox_image(image, tuple(reversed(self.model_image_size)))
+        image_data = np.array(boxed_image, dtype='float32')
+
+        print(image_data.shape)
+        image_data /= 255.
+        image_data = np.expand_dims(image_data, 0)  # Add batch dimension.
+
+        out_boxes, out_scores, out_classes = self.sess.run(
+            [self.boxes, self.scores, self.classes],
+            feed_dict={
+                self.yolo_model.input: image_data,
+                self.input_image_shape: [image.size[1], image.size[0]],
+                K.learning_phase(): 0
+            })
+
+        print('Found {} boxes for {}'.format(len(out_boxes), 'img'))
+
+        out_list = []
+        for i, c in reversed(list(enumerate(out_classes))):
+            predicted_class = self.class_codes[c]
+            box = out_boxes[i]
+            score = out_scores[i]
+
+            top, left, bottom, right = box
+            ### TO-DO: out_list.append(XXX)
+
+        return out_list
 
     def detect_image(self, image):
         start = timer()
