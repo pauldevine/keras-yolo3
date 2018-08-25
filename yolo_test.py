@@ -39,7 +39,9 @@ def infer_img(yolo, img_path):
     try:
         image = Image.open(img_path)
     except:
-        sys.exit('Cannot open image file: {}'.format(img_path))
+        #sys.exit('Cannot open image file: {}'.format(img_path))
+        print('!!! Cannot open image file: {}'.format(img_path))
+        return []
     else:
         return yolo.infer_image(image)
 
