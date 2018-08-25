@@ -7,7 +7,7 @@ from PIL import Image
 
 FLAGS = None
 TEST_DIR = 'open-images-dataset/kaggle-2018-object-detection/test_challenge_2018'
-OUTPUT_CSV = 'output.csv'
+OUTPUT_CSV = 'submit/output.csv'
 
 
 def detect_img(yolo, img_path):
@@ -48,6 +48,7 @@ def infer_img(yolo, img_path):
 
 def submit_test_imgs(yolo):
     jpgs = [f for f in os.listdir(TEST_DIR) if f.endswith('.jpg')]
+    os.mkdirs(os.path.split(OUTPUT_CSV)[0], exist_ok=True)
     with open(OUTPUT_CSV, 'w') as f:
         f.write('ImageId,PredictionString\n')
         for jpg in jpgs:
@@ -81,17 +82,17 @@ if __name__ == '__main__':
 
     parser.add_argument(
         '--shuffle', default=False, action="store_true",
-        help='Shuffle images for display mode'
+        help='shuffle images for display mode'
     )
 
     parser.add_argument(
         '--display', default=False, action="store_true",
-        help='Display mode, to show inferred images with bounding box overlays'
+        help='display mode, to show inferred images with bounding box overlays'
     )
 
     parser.add_argument(
         '--submit', default=False, action="store_true",
-        help='Submit mode, to generate "output.csv" for Kaggle submission'
+        help='submit mode, to generate "output.csv" for Kaggle submission'
     )
 
     FLAGS = parser.parse_args()
