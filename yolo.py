@@ -156,7 +156,7 @@ class YOLO(object):
             x_min = max(0.0, x_min) / w
             y_max = min(  h, y_max) / h
             x_max = min(  w, x_max) / w
-            if y_min >= 1.0 or x_min >= 1.0 or y_max <= 0.0 or x_max <= 0.0:
+            if y_min >= y_max or x_min >= x_max:
                 continue
 
             # 1 record: [label, confidence, x_min, y_min, x_max, y_max]
