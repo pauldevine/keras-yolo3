@@ -77,13 +77,44 @@ This is a Keras implementation of YOLOv3 (Tensorflow backend), for tackling Kagg
 
 ## Testing the trained model
 
-   Make a symbolic link for the model weight snapshot you'd like to use.
+   Execute `yolo_test.py` in 'display' mode. By default, the script would use `logs/002/trained_weights_final.h5` as the trained weight for testing.
 
-   To be updated......
+   ```shell
+   $ python3 yolo_test.py --help
+   Using TensorFlow backend.
+   usage: yolo_test.py [-h] [--model MODEL] [--score SCORE] [--shuffle]
+                       [--display] [--submit]
+
+   optional arguments:
+     -h, --help     show this help message and exit
+     --model MODEL  path to model weight file, default
+                    logs/002/trained_weights_final.h5
+     --score SCORE  score (confidence) threshold, default 0.001
+     --shuffle      shuffle images for display mode
+     --display      display mode, to show inferred images with bounding box
+                    overlays
+     --submit       submit mode, to generate "output.csv" for Kaggle submission
+   ```
+
+   For example,
+
+   ```shell
+   $ python3 yolo_test.py --display --score 0.3 --shuffle
+   ```
 
 ## Generating the file for Kaggle submission
 
-   To be updated......
+   Execute `yolo_test.py` in 'submit' mode. For example,
+
+   ```shell
+   $ python3 yolo_test.py --submit
+   ```
+
+   Then use `filter_submit.py` to set a different score (confidence) threshold for submission. Note that Kaggle might have problem processing the submission (csv) file if the file contains too many bounding boxes. We can effectively decrease the number of bounding boxes in the submission file by setting a higher score threshold.
+
+   ```shell
+   $ python3 filter_submit.py --score 0.01 submit/output.csv submit/output-filtered.csv
+   ```
 
 ---
 
@@ -92,7 +123,7 @@ This is a Keras implementation of YOLOv3 (Tensorflow backend), for tackling Kagg
 1. The test environment is
    - Python 3.5.2
    - Keras 2.2.2
-   - tensorflow 1.9.0
+   - TensorFlow 1.9.0
 
 2. Default anchors are used. If you use your own anchors, probably some changes are needed.
 
