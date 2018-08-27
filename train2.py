@@ -7,6 +7,7 @@ import keras.backend as K
 from keras.layers import Input, Lambda
 from keras.models import Model
 from keras.optimizers import SGD
+from sgd_accum import import SGDAccum 
 from keras.callbacks import TensorBoard, ModelCheckpoint, ReduceLROnPlateau, EarlyStopping
 from keras.utils import multi_gpu_model
 
@@ -17,6 +18,7 @@ from triangular3 import Triangular3Scheduler
 
 STAGE2_EPOCHS = 20
 BATCH_SIZE_2 = 6
+USE_SGDAccum = True
 
 
 def _main():
@@ -58,7 +60,10 @@ def _main():
     if True:
         for i in range(len(model.layers)):
             model.layers[i].trainable = True
-        model.compile(optimizer=SGD(lr=1e-6), loss={'yolo_loss': lambda y_true, y_pred: y_pred}) # recompile to apply the change
+        if USE_SGDAccum:
+            model.compile(optimizer=SGDAccum(lr=1e-8, accum_iters=8), loss={'yolo_loss': lambda y_true, y_pred: y_pred}) # recompile to apply the change
+        else:
+            model.compile(optimizer=SGD(lr=1e-8), loss={'yolo_loss': lambda y_true, y_pred: y_pred}) # recompile to apply the change
         print('Unfreeze all of the layers.')
 
         print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
