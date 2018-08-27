@@ -2,9 +2,9 @@
 Code copied from https://github.com/keras-team/keras/issues/3556#issuecomment-338914783
 '''
 
-import numpy as np
 from keras import backend as K
 from keras.optimizers import Optimizer
+#from .legacy import interfaces
 
 
 class SGDAccum(Optimizer):
@@ -24,7 +24,7 @@ class SGDAccum(Optimizer):
                  nesterov=False, accum_iters=1, **kwargs):
         super(SGDAccum, self).__init__(**kwargs)
         with K.name_scope(self.__class__.__name__):
-            self.iterations = K.variable(0, dtype='int64', name='iterations')
+            self.iterations = K.variable(0, name='iterations')
             self.lr = K.variable(lr, name='lr')
             self.momentum = K.variable(momentum, name='momentum')
             self.decay = K.variable(decay, name='decay')
@@ -32,7 +32,7 @@ class SGDAccum(Optimizer):
         self.initial_decay = decay
         self.nesterov = nesterov
 
-    @interfaces.legacy_get_updates_support
+    #@interfaces.legacy_get_updates_support
     def get_updates(self, loss, params):
         grads = self.get_gradients(loss, params)
         self.updates = [K.update_add(self.iterations, 1)]

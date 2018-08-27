@@ -7,7 +7,7 @@ import keras.backend as K
 from keras.layers import Input, Lambda
 from keras.models import Model
 from keras.optimizers import SGD
-from sgd_accum import import SGDAccum 
+from sgd_accum import SGDAccum
 from keras.callbacks import TensorBoard, ModelCheckpoint, ReduceLROnPlateau, EarlyStopping
 from keras.utils import multi_gpu_model
 
