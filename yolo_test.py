@@ -48,7 +48,7 @@ def infer_img(yolo, img_path):
 
 def submit_test_imgs(yolo):
     jpgs = [f for f in os.listdir(TEST_DIR) if f.endswith('.jpg')]
-    os.mkdirs(os.path.split(OUTPUT_CSV)[0], exist_ok=True)
+    os.makedirs(os.path.split(OUTPUT_CSV)[0], exist_ok=True)
     with open(OUTPUT_CSV, 'w') as f:
         f.write('ImageId,PredictionString\n')
         for jpg in jpgs:
