@@ -92,3 +92,24 @@ class LRFinder(Callback):
             plt.show()
         else:
             plt.savefig(fig_name)
+
+    def save_history(self, csv_name=None):
+        '''Helper function to save learning rate and loss history into a csv file.
+
+        Example code to read the csv file and plot loss curve:
+        >>> import csv
+        >>> import matplotlib.pyplot as plt
+        >>> with open('lr_finder_loss.csv', 'r') as f:
+        ...     cr = csv.reader(f)
+        ...     lr_losses = [(float(row[1]), float(row[2])) for row in cr]
+        >>> lrs, losses = zip(*lr_losses)
+        >>> plt.plot(lrs, losses)
+        >>> plt.xscale('log')
+        >>> plt.show()
+        '''
+        import csv
+
+        with open(csv_name, 'w') as f:
+            wr = csv.writer(f)
+            for it, lr, loss in zip(self.history['iterations'], self.history['lr'], self.history['loss']):
+                wr.writerow([it, lr, loss])

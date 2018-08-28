@@ -18,6 +18,9 @@ from yolo3.utils import get_random_data
 from lr_finder import LRFinder
 
 
+TOTAL_ITERATIONS = 10000
+
+
 def _main():
     annotation_path = 'train.txt'
     classes_path = 'model_data/openimgs_classes.txt'
@@ -29,24 +32,26 @@ def _main():
     input_shape = (416,416) # multiple of 32, hw
 
     # use darknet53 weights
+    #model = create_model(input_shape, anchors, num_classes,
+    #        freeze_body=2, weights_path='model_data/darknet53_weights.h5')
     model = create_model(input_shape, anchors, num_classes,
-            freeze_body=2, weights_path='model_data/darknet53_weights.h5')
+            freeze_body=0, weights_path='logs/001/trained_weights_stage_2.h5')
 
     val_split = 0.1
     with open(annotation_path) as f:
         lines = f.readlines()
-    np.random.seed(10101)
+    #np.random.seed(10101)
     np.random.shuffle(lines)
-    np.random.seed(None)
+    #np.random.seed(None)
     num_val = int(len(lines)*val_split)
     num_val = 10000 if num_val > 10000 else num_val
     num_train = len(lines) - num_val
 
     if True:
         batch_size = 6
-        lr_finder = LRFinder(min_lr=1e-9,
-                             max_lr=1e-3,
-                             steps_per_epoch=10000,
+        lr_finder = LRFinder(min_lr=1e-10,
+                             max_lr=2e-2,
+                             steps_per_epoch=TOTAL_ITERATIONS,
                              epochs=1)
         for i in range(len(model.layers)):
             model.layers[i].trainable = True
@@ -54,13 +59,14 @@ def _main():
 
         print('train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
         model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes),
-                steps_per_epoch=10000,
+                steps_per_epoch=TOTAL_ITERATIONS,
                 validation_data=data_generator_wrapper(lines[num_train:], batch_size, input_shape, anchors, num_classes),
                 validation_steps=1,
                 epochs=1,
                 initial_epoch=0,
                 callbacks=[lr_finder])
 
+        lr_finder.save_history('lr_finder_loss.csv')
         lr_finder.plot_loss('lr_finder_loss.png')
 
     # further training if needed.
@@ -107,36 +113,6 @@ def create_model(input_shape, anchors, num_classes, load_pretrained=True, freeze
 
     model_loss = Lambda(yolo_loss, output_shape=(1,), name='yolo_loss',
         arguments={'anchors': anchors, 'num_classes': num_classes, 'ignore_thresh': 0.5})(
-        [*model_body.output, *y_true])
-    model = Model([model_body.input, *y_true], model_loss)
-
-    return model
-
-def create_tiny_model(input_shape, anchors, num_classes, load_pretrained=True, freeze_body=2,
-            weights_path='model_data/tiny_yolo_weights.h5'):
-    '''create the training model, for Tiny YOLOv3'''
-    K.clear_session() # get a new session
-    image_input = Input(shape=(None, None, 3))
-    h, w = input_shape
-    num_anchors = len(anchors)
-
-    y_true = [Input(shape=(h//{0:32, 1:16}[l], w//{0:32, 1:16}[l], \
-        num_anchors//2, num_classes+5)) for l in range(2)]
-
-    model_body = tiny_yolo_body(image_input, num_anchors//2, num_classes)
-    print('Create Tiny YOLOv3 model with {} anchors and {} classes.'.format(num_anchors, num_classes))
-
-    if load_pretrained:
-        model_body.load_weights(weights_path, by_name=True, skip_mismatch=True)
-        print('Load weights {}.'.format(weights_path))
-        if freeze_body in [1, 2]:
-            # Freeze the darknet body or freeze all but 2 output layers.
-            num = (20, len(model_body.layers)-2)[freeze_body-1]
-            for i in range(num): model_body.layers[i].trainable = False
-            print('Freeze the first {} layers of total {} layers.'.format(num, len(model_body.layers)))
-
-    model_loss = Lambda(yolo_loss, output_shape=(1,), name='yolo_loss',
-        arguments={'anchors': anchors, 'num_classes': num_classes, 'ignore_thresh': 0.7})(
         [*model_body.output, *y_true])
     model = Model([model_body.input, *y_true], model_loss)
 
