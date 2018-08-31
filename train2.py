@@ -16,9 +16,12 @@ from yolo3.utils import get_random_data
 from triangular3 import Triangular3Scheduler
 
 
-STAGE2_EPOCHS = 20
-BATCH_SIZE_2 = 6
+MIN_LR = 1e-9
+MAX_LR = 3e-4
+EPOCHS = 100
+BATCH_SIZE = 6
 USE_SGDAccum = True
+ACCUM_ITERS = 8
 
 
 def _main():
@@ -34,7 +37,7 @@ def _main():
     input_shape = (416,416) # multiple of 32, hw
 
     model = create_model(input_shape, anchors, num_classes,
-            freeze_body=2, weights_path=log1_dir+'trained_weights_stage_2.h5')
+            freeze_body=0, weights_path=log1_dir+'trained_weights_stage_2.h5')
 
     val_split = 0.1
     with open(annotation_path) as f:
@@ -46,32 +49,32 @@ def _main():
     num_val = 10000 if num_val > 10000 else num_val
     num_train = len(lines) - num_val
 
-    batch_size = BATCH_SIZE_2
+    batch_size = BATCH_SIZE
     logging = TensorBoard(log_dir=log2_dir)
     checkpoint = ModelCheckpoint(log2_dir + 'ep{epoch:03d}-loss{loss:.3f}-val_loss{val_loss:.3f}.h5',
-        monitor='val_loss', save_weights_only=True, save_best_only=True, period=1)
-    schedule = Triangular3Scheduler(min_lr=1e-8,
-                                    max_lr=1e-4,
+        monitor='val_loss', save_weights_only=True, save_best_only=False, period=1)
+    schedule = Triangular3Scheduler(min_lr=MIN_LR,
+                                    max_lr=MAX_LR,
                                     steps_per_epoch=np.ceil(num_train/batch_size),
                                     lr_decay=1.0,
                                     cycle_length=1,
-                                    mult_factor=1)
+                                    mult_factor=0.99)
 
     if True:
+        print('Unfreeze all of the layers.')
         for i in range(len(model.layers)):
             model.layers[i].trainable = True
         if USE_SGDAccum:
-            model.compile(optimizer=SGDAccum(lr=1e-8, accum_iters=8), loss={'yolo_loss': lambda y_true, y_pred: y_pred}) # recompile to apply the change
+            model.compile(optimizer=SGDAccum(lr=MIN_LR, accum_iters=ACCUM_ITERS), loss={'yolo_loss': lambda y_true, y_pred: y_pred}) # recompile to apply the change
         else:
-            model.compile(optimizer=SGD(lr=1e-8), loss={'yolo_loss': lambda y_true, y_pred: y_pred}) # recompile to apply the change
-        print('Unfreeze all of the layers.')
+            model.compile(optimizer=SGD(lr=MIN_LR), loss={'yolo_loss': lambda y_true, y_pred: y_pred}) # recompile to apply the change
 
         print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
         model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes),
             steps_per_epoch=max(1, num_train//batch_size),
             validation_data=data_generator_wrapper(lines[num_train:], batch_size, input_shape, anchors, num_classes),
             validation_steps=max(1, num_val//batch_size),
-            epochs=STAGE2_EPOCHS,
+            epochs=EPOCHS,
             initial_epoch=0,
             callbacks=[logging, checkpoint, schedule])
         model.save_weights(log2_dir + 'trained_weights_final.h5')
