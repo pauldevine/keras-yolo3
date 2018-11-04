@@ -11,7 +11,7 @@ def filter_submit(input_path, output_path, score):
     with open(input_path, 'r') as f_in:
         with open(output_path, 'w') as f_out:
             first_line = f_in.readline()
-            f_out.write('ImageId,PredictionString\n')
+            f_out.write('image_id,labels\n')
             for line in f_in.readlines():
                 line = line.strip()
                 img_id, rest_of_line = line.split(',')
@@ -21,8 +21,9 @@ def filter_submit(input_path, output_path, score):
                 box_strings = []
                 for i in range(0, len(boxes), 6):
                     # 1 record: [label, score, x_min, y_min, x_max, y_max]
-                    b = boxes[i:i+6]
-                    if float(b[1]) >= score:
+                    b = boxes[i:i+1]
+                    b_score = boxes[i:i+6]
+                    if float(b_score[1]) >= score:
                         box_strings.append(' '.join(b))
                 f_out.write('{},'.format(img_id))
                 if box_strings:
