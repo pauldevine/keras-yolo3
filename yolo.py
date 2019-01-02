@@ -21,7 +21,7 @@ class YOLO(object):
     _defaults = {
         #"model_path": 'model_data/yolo.h5',
         #"model_path": 'logs/002/trained_weights_final.h5',
-        "model_path": 'test_model.h5',
+        "model_path": 'inclusive_model.h5',
         "anchors_path": 'model_data/yolo_anchors.txt',
         "classes_path": 'model_data/openimgs_classes.txt',
         "codes_path": 'model_data/openimgs_codes.txt',
@@ -29,7 +29,7 @@ class YOLO(object):
         "score" : 0.001,
         "iou" : 0.45,
         "model_image_size" : (416, 416),
-        "gpu_num" : 1,
+        "gpu_num" : 2,
     }
 
     @classmethod
@@ -73,7 +73,7 @@ class YOLO(object):
     def generate(self):
         model_path = os.path.expanduser(self.model_path)
         assert model_path.endswith('.h5'), 'Keras model or weights must be a .h5 file.'
-
+        print("in generate")
         # Load model, or construct model and load weights.
         num_anchors = len(self.anchors)
         num_classes = len(self.class_names)
@@ -104,11 +104,14 @@ class YOLO(object):
 
         # Generate output tensor targets for filtered bounding boxes.
         self.input_image_shape = K.placeholder(shape=(2, ))
+        print("self.gpu_num: {}".format(self.gpu_num))
         if self.gpu_num>=2:
             self.yolo_model = multi_gpu_model(self.yolo_model, gpus=self.gpu_num)
         boxes, scores, classes = yolo_eval(self.yolo_model.output, self.anchors,
                 len(self.class_names), self.input_image_shape,
                 score_threshold=self.score, iou_threshold=self.iou)
+            print("I'm here!!!!!")
+            print(self.yolo_model.get_config()())
         return boxes, scores, classes
 
     def infer_image(self, image):

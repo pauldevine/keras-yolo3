@@ -9,6 +9,7 @@ from keras.layers import Conv2D, Add, ZeroPadding2D, UpSampling2D, Concatenate, 
 from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.normalization import BatchNormalization
 from keras.models import Model
+from keras.utils import multi_gpu_model
 from keras.regularizers import l2
 
 from yolo3.utils import compose
@@ -84,7 +85,12 @@ def yolo_body(inputs, num_anchors, num_classes):
     x = Concatenate()([x,darknet.layers[92].output])
     x, y3 = make_last_layers(x, 128, num_anchors*(num_classes+5))
 
-    return Model(inputs, [y1,y2,y3])
+    #return Model(inputs, [y1,y2,y3])
+    my_model = Model(inputs, [y1,y2,y3])
+    gpu_num=2
+    if gpu_num>=2:
+            my_model = multi_gpu_model(my_model, gpus=gpu_num)
+    return my_model
 
 def tiny_yolo_body(inputs, num_anchors, num_classes):
     '''Create Tiny YOLO_v3 model CNN body in keras.'''
