@@ -12,6 +12,7 @@ from keras.utils import multi_gpu_model
 
 from yolo3.model import preprocess_true_boxes, yolo_body, tiny_yolo_body, yolo_loss
 from yolo3.utils import get_random_data
+from yolo3 import DataGenerator
 
 
 USE_DARKNET53 = True
@@ -56,6 +57,13 @@ def _main():
     num_val = 10000 if num_val > 10000 else num_val
     num_train = len(lines) - num_val
 
+    train_data = lines[:num_train]
+    validation_data = lines[num_train:]
+
+    # Generators
+    training_generator = DataGenerator(train_data, labels, **params)
+    validation_generator = DataGenerator(validation_data, labels, **params)
+
     # Train with frozen layers first, to get a stable loss.
     # Adjust num epochs to your dataset. This step is enough to obtain a not bad model.
     if True:
@@ -65,13 +73,16 @@ def _main():
 
         batch_size = int(BATCH_SIZE_1)
         print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
-        model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes),
-                steps_per_epoch=max(1, num_train//batch_size),
-                validation_data=data_generator_wrapper(lines[num_train:], batch_size, input_shape, anchors, num_classes),
-                validation_steps=max(1, num_val//batch_size),
-                epochs=STAGE1_EPOCHS,
-                initial_epoch=0,
-                callbacks=[logging, checkpoint])
+
+        model.fit_generator(generator=training_generator,
+                    validation_data=validation_generator,
+                    steps_per_epoch=max(1, num_train//batch_size),
+                    validation_steps=max(1, num_val//batch_size),
+                    epochs=STAGE1_EPOCHS,
+                    initial_epoch=0,
+                    callbacks=[logging, checkpoint],
+                    use_multiprocessing=True,
+                    workers=12)        
         model.save_weights(log_dir + 'trained_weights_stage_1.h5')
 
     # Unfreeze and continue training, to fine-tune.
@@ -142,41 +153,19 @@ def create_model(input_shape, anchors, num_classes, load_pretrained=True, freeze
 
     return model
 
-def create_tiny_model(input_shape, anchors, num_classes, load_pretrained=True, freeze_body=2,
-            weights_path='model_data/tiny_yolo_weights.h5'):
-    '''create the training model, for Tiny YOLOv3'''
-    K.clear_session() # get a new session
-    image_input = Input(shape=(None, None, 3))
-    h, w = input_shape
-    num_anchors = len(anchors)
-
-    y_true = [Input(shape=(h//{0:32, 1:16}[l], w//{0:32, 1:16}[l], \
-        num_anchors//2, num_classes+5)) for l in range(2)]
-
-    model_body = tiny_yolo_body(image_input, num_anchors//2, num_classes)
-    print('Create Tiny YOLOv3 model with {} anchors and {} classes.'.format(num_anchors, num_classes))
-
-    if load_pretrained:
-        model_body.load_weights(weights_path, by_name=True, skip_mismatch=True)
-        print('Load weights {}.'.format(weights_path))
-        if freeze_body in [1, 2]:
-            # Freeze the darknet body or freeze all but 2 output layers.
-            num = (20, len(model_body.layers)-2)[freeze_body-1]
-            for i in range(num): model_body.layers[i].trainable = False
-            print('Freeze the first {} layers of total {} layers.'.format(num, len(model_body.layers)))
-
-    model_loss = Lambda(yolo_loss, output_shape=(1,), name='yolo_loss',
-        arguments={'anchors': anchors, 'num_classes': num_classes, 'ignore_thresh': 0.7})(
-        [*model_body.output, *y_true])
-    model = Model([model_body.input, *y_true], model_loss)
-
-    return model
-
 
 def data_generator(annotation_lines, batch_size, input_shape, anchors, num_classes):
     '''data generator for fit_generator'''
     n = len(annotation_lines)
     i = 0
+    # Parameters
+    params = {'dim': input_shape,
+              'batch_size': batch_size,
+              'n_classes': num_classes,
+              'shuffle': True}
+    generator = DataGenerator(annotation_lines, labels, **params)
+    return generator
+
     while True:
         image_data = []
         box_data = []
