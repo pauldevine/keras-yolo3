@@ -3,8 +3,8 @@ Code from https://gist.github.com/jeremyjordan/5a222e04bb78c242f5763ad40626c452
 '''
 
 
-from keras.callbacks import Callback
-import keras.backend as K
+from tensorflow.keras.callbacks import Callback
+from tensorflow.keras import backend as K
 import numpy as np
 
 

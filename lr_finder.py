@@ -4,8 +4,8 @@ Code from https://gist.github.com/jeremyjordan/ac0229abd4b2b7000aca1643e88e0f02#
 
 
 import math
-import keras.backend as K
-from keras.callbacks import Callback
+from tensorflow.keras import backend as K
+from tensorflow.keras.callbacks import Callback
 import matplotlib.pyplot as plt
 
 

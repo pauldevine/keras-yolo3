@@ -6,12 +6,14 @@ The result would be saved as 'lr_finder_loss.png'.
 
 
 import numpy as np
-import keras.backend as K
-from keras.layers import Input, Lambda
-from keras.models import Model
-from keras.optimizers import SGD
-from keras.callbacks import TensorBoard, ModelCheckpoint, ReduceLROnPlateau, EarlyStopping
-from keras.utils import multi_gpu_model
+import tensorflow as tf
+from tensorflow.keras import backend as K
+from tensorflow.keras import layers
+from tensorflow.keras.layers import Input, Lambda
+from tensorflow.keras.models import Model
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint, ReduceLROnPlateau, EarlyStopping
+from tensorflow.keras.utils import multi_gpu_model
 
 from yolo3.model import preprocess_true_boxes, yolo_body, tiny_yolo_body, yolo_loss
 from yolo3.utils import get_random_data
@@ -23,7 +25,7 @@ TOTAL_ITERATIONS = 10000
 
 def _main():
     annotation_path = 'train.txt'
-    classes_path = 'model_data/openimgs_classes.txt'
+    classes_path = 'model_data/mare_classes.txt'
     anchors_path = 'model_data/yolo_anchors.txt'
     class_names = get_classes(classes_path)
     num_classes = len(class_names)
@@ -35,7 +37,7 @@ def _main():
     #model = create_model(input_shape, anchors, num_classes,
     #        freeze_body=2, weights_path='model_data/darknet53_weights.h5')
     model = create_model(input_shape, anchors, num_classes,
-            freeze_body=0, weights_path='logs/001/trained_weights_stage_2.h5')
+            freeze_body=0, weights_path='logs/mare//trained_weights_stage_2.h5')
 
     val_split = 0.1
     with open(annotation_path) as f:
@@ -103,7 +105,7 @@ def create_model(input_shape, anchors, num_classes, load_pretrained=True, freeze
     print('Create YOLOv3 model with {} anchors and {} classes.'.format(num_anchors, num_classes))
 
     if load_pretrained:
-        model_body.load_weights(weights_path, by_name=True, skip_mismatch=True)
+        model_body.load_weights(weights_path, by_name=True)
         print('Load weights {}.'.format(weights_path))
         if freeze_body in [1, 2]:
             # Freeze darknet53 body or freeze all but 3 output layers.

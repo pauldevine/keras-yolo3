@@ -2,9 +2,9 @@
 Code copied from https://github.com/keras-team/keras/issues/3556#issuecomment-338914783
 '''
 
-from keras import backend as K
-from keras.optimizers import Optimizer
-from keras.legacy import interfaces
+from tensorflow.keras import backend as K
+from tensorflow.keras.optimizers import Optimizer
+#from tensorflow.keras.legacy import interfaces
 
 
 class SGDAccum(Optimizer):
@@ -32,7 +32,7 @@ class SGDAccum(Optimizer):
         self.initial_decay = decay
         self.nesterov = nesterov
 
-    @interfaces.legacy_get_updates_support
+    #@interfaces.legacy_get_updates_support
     def get_updates(self, loss, params):
         grads = self.get_gradients(loss, params)
         self.updates = [K.update_add(self.iterations, 1)]

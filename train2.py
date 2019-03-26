@@ -3,35 +3,43 @@ Retrain the YOLO model for your own dataset.
 """
 
 import numpy as np
-import keras.backend as K
-from keras.layers import Input, Lambda
-from keras.models import Model
-from keras.optimizers import SGD
+import tensorflow as tf
+from tensorflow.keras import backend as K
+from tensorflow.keras import layers
+from tensorflow.keras.layers import Input, Lambda
+from tensorflow.keras.models import Model
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.optimizers import SGD
 from sgd_accum import SGDAccum
-from keras.callbacks import TensorBoard, ModelCheckpoint, ReduceLROnPlateau, EarlyStopping
-from keras.utils import multi_gpu_model
+from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint, ReduceLROnPlateau, EarlyStopping
+from tensorflow.keras.utils import multi_gpu_model
 
 from yolo3.model import preprocess_true_boxes, yolo_body, tiny_yolo_body, yolo_loss
 from yolo3.utils import get_random_data
 from triangular3 import Triangular3Scheduler
+
+import coremltools
 
 
 MIN_LR = 1e-9
 MAX_LR = 3e-4
 EPOCHS = 100
 BATCH_SIZE = 6
-USE_SGDAccum = True
+USE_SGDAccum = False
 ACCUM_ITERS = 8
+GEN_COREML = True
 
 
 def _main():
-    annotation_path = 'train.txt'
-    log1_dir = 'logs/001/'
+    annotation_path = 'mare_train.txt'
+    log1_dir = 'logs/mare/'
     log2_dir = 'logs/002/'
-    classes_path = 'model_data/openimgs_classes.txt'
+    classes_path = 'model_data/mare_classes.txt'
     anchors_path = 'model_data/yolo_anchors.txt'
     class_names = get_classes(classes_path)
+    print("CLASS NAMES: " + str(class_names))
     num_classes = len(class_names)
+    print("CLASS NAMES: " + str(class_names) + " " + str(num_classes))
     anchors = get_anchors(anchors_path)
 
     input_shape = (416,416) # multiple of 32, hw
@@ -65,9 +73,18 @@ def _main():
         for i in range(len(model.layers)):
             model.layers[i].trainable = True
         if USE_SGDAccum:
-            model.compile(optimizer=SGDAccum(lr=MIN_LR, accum_iters=ACCUM_ITERS), loss={'yolo_loss': lambda y_true, y_pred: y_pred}) # recompile to apply the change
+            model.compile(optimizer=SGDAccum(name='test', lr=MIN_LR, accum_iters=ACCUM_ITERS), loss={'yolo_loss': lambda y_true, y_pred: y_pred}) # recompile to apply the change
         else:
             model.compile(optimizer=SGD(lr=MIN_LR), loss={'yolo_loss': lambda y_true, y_pred: y_pred}) # recompile to apply the change
+
+        if GEN_COREML:
+            print("[INFO] converting model")
+            coreml_model = coremltools.converters.keras.convert(model,
+                input_names="image",
+                image_input_names="image",
+                image_scale=1/255.0,
+                class_labels=class_labels,
+                is_bgr=True)
 
         print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
         model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes),
@@ -113,7 +130,7 @@ def create_model(input_shape, anchors, num_classes, load_pretrained=True, freeze
     print('Create YOLOv3 model with {} anchors and {} classes.'.format(num_anchors, num_classes))
 
     if load_pretrained:
-        model_body.load_weights(weights_path, by_name=True, skip_mismatch=True)
+        model_body.load_weights(weights_path, by_name=True)
         print('Load weights {}.'.format(weights_path))
         if freeze_body in [1, 2]:
             # Freeze darknet53 body or freeze all but 3 output layers.
