@@ -7,7 +7,7 @@ import numpy as np
 
 
 FLAGS = None
-TEST_DIR = 'open-images-dataset/mare_test'
+TEST_DIR = '/Users/pdevine/Documents/Mare/raw_images_VTS_03_1'
 OUTPUT_CSV = 'submit/output.csv'
 OUTPUT_DIR = 'submit'
 
@@ -30,6 +30,7 @@ def detect_test_imgs(yolo):
         shuffle(jpgs)
     for jpg in jpgs:
         img_path = os.path.join(TEST_DIR, jpg)
+        
         detect_img(yolo, img_path)
         str_in = input('{}, <ENTER> for next or "q" to quit: '.format(img_path))
         if str_in.lower() == 'q':
@@ -92,41 +93,44 @@ def train_test_imgs(yolo):
         print('Found {} bounding boxes'.format(len(boxes)))
         with open(OUTPUT_DIR + '/' + xml_file, 'w') as f:
           f.write('''
-            <annotation>
-              <folder>Videos</folder>
-              <filename>{}</filename>
-              <size>
-                  <width>{}</width>
-                  <height>{}</height>
-                  <depth>3</depth>
-              </size>
-              <segmented>0</segmented>'''.format(jpg, image.width, image.height))
+<annotation>
+  <folder>Videos</folder>
+  <filename>{}</filename>
+  <size>
+      <width>{}</width>
+      <height>{}</height>
+      <depth>3</depth>
+  </size>
+  <segmented>0</segmented>'''.format(jpg, image.width, image.height))
           f.write('{},'.format(os.path.splitext(jpg)[0]))
           # 1 record: [label, confidence, x_min, y_min, x_max, y_max]
+
           box_strings = []
           for box in boxes:
             label = taxonomy[box[0]]
-            top = int(box[2] * image.height)     #x_min
-            left = int(box[3] * image.width)     #y_min
-            bottom =int(box[4] * image.height)   #x_max
-            right = int(box[5] * image.width)    #y_max
+            confidence = box[1]
+            left = '{}'.format(int(round(box[2] * image.width)))     #x_min
+            top = '{}'.format(int(round(box[3] * image.height)))    #y_min
+            
+            right = '{}'.format(int(round(box[4] * image.width)))    #x_max
+            bottom ='{}'.format(int(round(box[5] * image.height)))   #y_max
             #print('label: {} top: {} left: {} bottom: {} right: {}'.format(label, 
             #    top, left, bottom, right))
             box_strings.append('''
-            <object>
-              <name>{}</name>
-              <pose>Unspecified</pose>
-              <truncated>0</truncated>
-              <occluded>0</occluded>
-              <difficult>0</difficult>
-              <bndbox>
-                  <xmin>{}</xmin>
-                  <ymin>{}</ymin>
-                  <xmax>{}</xmax>
-                  <ymax>{}</ymax>
-              </bndbox>
-            </object>
-            '''.format(label,top,left,bottom,right))
+  <object>
+    <name>{}</name>
+    <pose>Unspecified</pose>
+    <truncated>0</truncated>
+    <occluded>0</occluded>
+    <difficult>0</difficult>
+    <bndbox>
+        <xmin>{}</xmin>
+        <ymin>{}</ymin>
+        <xmax>{}</xmax>
+        <ymax>{}</ymax>
+    </bndbox>
+  </object>
+            '''.format(label,left,top,right,bottom))
           if box_strings:
               f.write('\n'.join(box_strings))
           f.write('</annotation>\n')
