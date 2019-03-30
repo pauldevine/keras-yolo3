@@ -35,7 +35,7 @@ def _main():
     #model = create_model(input_shape, anchors, num_classes,
     #        freeze_body=2, weights_path='model_data/darknet53_weights.h5')
     model = create_model(input_shape, anchors, num_classes,
-            freeze_body=0, weights_path='logs/001/trained_weights_stage_2.h5')
+            freeze_body=0, weights_path='/home/pdevine/keras-yolo3-v2/logs/002/trained_weights_final.h5')
 
     val_split = 0.1
     with open(annotation_path) as f:
@@ -58,6 +58,7 @@ def _main():
         model.compile(optimizer=SGD(lr=1e-8), loss={'yolo_loss': lambda y_true, y_pred: y_pred})
 
         print('train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
+        model.save('/home/pdevine/kerasfullmodel.h5',overwrite=True,include_optimizer=True)
         model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes),
                 steps_per_epoch=TOTAL_ITERATIONS,
                 validation_data=data_generator_wrapper(lines[num_train:], batch_size, input_shape, anchors, num_classes),
