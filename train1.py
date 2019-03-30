@@ -15,8 +15,8 @@ from yolo3.utils import get_random_data
 
 
 USE_DARKNET53 = True
-STAGE1_EPOCHS = 3
-STAGE2_EPOCHS = 6
+STAGE1_EPOCHS = 50
+STAGE2_EPOCHS = 100
 BATCH_SIZE_1 = 32
 BATCH_SIZE_2 = 6
 
