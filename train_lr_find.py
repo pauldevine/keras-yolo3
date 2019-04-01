@@ -9,6 +9,8 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras import backend as K
 from tensorflow.keras import layers
+from tensorflow.keras.optimizers import SGD
+from sgd_accum import SGDAccum
 from tensorflow.keras.layers import Input, Lambda
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
@@ -25,10 +27,11 @@ TOTAL_ITERATIONS = 10000
 
 def _main():
     annotation_path = 'train.txt'
-    classes_path = 'model_data/mare_classes.txt'
+    classes_path = 'model_data/openimgs_classes.txt'
     anchors_path = 'model_data/yolo_anchors.txt'
     class_names = get_classes(classes_path)
     num_classes = len(class_names)
+    print('num_classes: ' + str(num_classes))
     anchors = get_anchors(anchors_path)
 
     input_shape = (416,416) # multiple of 32, hw
@@ -37,7 +40,7 @@ def _main():
     #model = create_model(input_shape, anchors, num_classes,
     #        freeze_body=2, weights_path='model_data/darknet53_weights.h5')
     model = create_model(input_shape, anchors, num_classes,
-            freeze_body=0, weights_path='logs/mare//trained_weights_stage_2.h5')
+            freeze_body=0, weights_path='logs/002/trained_weights_final.h5')
 
     val_split = 0.1
     with open(annotation_path) as f:
@@ -58,7 +61,15 @@ def _main():
         for i in range(len(model.layers)):
             model.layers[i].trainable = True
         model.compile(optimizer=SGD(lr=1e-8), loss={'yolo_loss': lambda y_true, y_pred: y_pred})
-
+        print('saving trained model')
+        model.save('/home/pdevine/kerasfullmodel.h5',overwrite=True,include_optimizer=True)
+        frozen_graph = freeze_session(K.get_session(),
+                              output_names=[out.op.name for out in model.outputs])
+        tf.train.write_graph(frozen_graph, "/home/pdevine/", "my_model.pb", as_text=False)
+        print("Saved model to disk")
+        newmodel = model.load('/home/pdevine/kerasfullmodel.h5')
+        coreml_model = coremltools.converters.keras.convert(newmodel)
+        coreml_model.save('my_model.mlmodel')
         print('train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
         model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes),
                 steps_per_epoch=TOTAL_ITERATIONS,
@@ -73,6 +84,34 @@ def _main():
 
     # further training if needed.
 
+
+def freeze_session(session, keep_var_names=None, output_names=None, clear_devices=True):
+    """
+    Freezes the state of a session into a pruned computation graph.
+
+    Creates a new computation graph where variable nodes are replaced by
+    constants taking their current value in the session. The new graph will be
+    pruned so subgraphs that are not necessary to compute the requested
+    outputs are removed.
+    @param session The TensorFlow session to be frozen.
+    @param keep_var_names A list of variable names that should not be frozen,
+                          or None to freeze all the variables in the graph.
+    @param output_names Names of the relevant graph outputs.
+    @param clear_devices Remove the device directives from the graph for better portability.
+    @return The frozen graph definition.
+    """
+    graph = session.graph
+    with graph.as_default():
+        freeze_var_names = list(set(v.op.name for v in tf.global_variables()).difference(keep_var_names or []))
+        output_names = output_names or []
+        output_names += [v.op.name for v in tf.global_variables()]
+        input_graph_def = graph.as_graph_def()
+        if clear_devices:
+            for node in input_graph_def.node:
+                node.device = ""
+        frozen_graph = tf.graph_util.convert_variables_to_constants(
+            session, input_graph_def, output_names, freeze_var_names)
+        return frozen_graph
 
 def get_classes(classes_path):
     '''loads the classes'''
@@ -137,6 +176,7 @@ def data_generator(annotation_lines, batch_size, input_shape, anchors, num_class
             i = (i+1) % n
         image_data = np.array(image_data)
         box_data = np.array(box_data)
+        print(box_data, input_shape, anchors, num_classes)
         y_true = preprocess_true_boxes(box_data, input_shape, anchors, num_classes)
         yield [image_data, *y_true], np.zeros(batch_size)
 

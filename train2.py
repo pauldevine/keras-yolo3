@@ -83,8 +83,9 @@ def _main():
                 input_names="image",
                 image_input_names="image",
                 image_scale=1/255.0,
-                class_labels=class_labels,
+                class_labels=class_names,
                 is_bgr=True)
+            coreml_model.save('coremlClassifier.mlmodel')
 
         print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
         model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes),
