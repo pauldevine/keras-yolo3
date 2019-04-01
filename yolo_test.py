@@ -7,8 +7,8 @@ import numpy as np
 
 
 FLAGS = None
-TEST_DIR = '/Users/pdevine/Documents/Mare/raw_images_VTS_03_1'
 TEST_VIDEO = '/Users/pdevine/Documents/Mare/Videos/VTS_03_1.m4v'
+TEST_DIR = 'open-images-dataset/mare'
 OUTPUT_CSV = 'submit/output.csv'
 OUTPUT_DIR = 'submit'
 
