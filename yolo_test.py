@@ -7,6 +7,7 @@ import numpy as np
 
 
 FLAGS = None
+TEST_VIDEO = '/Users/pdevine/Documents/Mare/Videos/VTS_03_1.m4v'
 TEST_DIR = 'open-images-dataset/mare'
 OUTPUT_CSV = 'submit/output.csv'
 OUTPUT_DIR = 'submit'
@@ -37,6 +38,11 @@ def detect_test_imgs(yolo):
             break
     yolo.close_session()
 
+def train_test_video(yolo):
+    global FLAGS
+    
+    detect_video(yolo, TEST_VIDEO)
+    yolo.close_session()
 
 def infer_img(yolo, img_path):
     try:
@@ -181,6 +187,11 @@ if __name__ == '__main__':
         help='create image.xml files to do additional training via algorithm'
     )
 
+    parser.add_argument(
+        '--video', type=str, default='',
+        help='create image.xml files to do additional training via algorithm'
+    )
+
     FLAGS = parser.parse_args()
 
     if FLAGS.display:
@@ -192,5 +203,8 @@ if __name__ == '__main__':
     elif FLAGS.train:
         print("Training mode: writing output to .xml files")
         train_test_imgs(YOLO(**vars(FLAGS)))
+    elif FLAGS.video:
+        print("Training video: writing output to .xml files")
+        train_test_video(YOLO(**vars(FLAGS)))
     else:
         print("Please specify either Display, Submit, or train mode.")
