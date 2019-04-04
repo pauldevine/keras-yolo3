@@ -4,8 +4,8 @@ import tensorflow as tf
 import elementpath
 from xml.etree import ElementTree as ET
 
-outfilename = '/Users/pdevine/Documents/Mare/mare yolo annotations/mare_annotations.txt'
-TRAIN_ANNOTATIONS = '/Users/pdevine/Documents/Mare/Videos/*.xml'
+outfilename = 'open-images-dataset/mare_annotations.txt'
+TRAIN_ANNOTATIONS = 'open-images-dataset/mare_hand_edit/*.xml'
 OBJECT_TYPES=['metridium', 'fish']
 
 def _parse_function(filename):
@@ -64,7 +64,7 @@ def _parse_function(filename):
 #/home/pdevine/keras-yolo3-v2/open-images-dataset/train/8d6e7c7f05dd136f.jpg 0,0,682,1023,148
 
 with open(outfilename, 'w') as outfile:
-    for filename in glob.glob('/Users/pdevine/Documents/Mare/Videos/*.xml'):
+    for filename in glob.glob('open-images-dataset/mare_hand_edit/*.xml'):
         if filename == outfilename:
             # don't want to copy the output into the output
             continue
