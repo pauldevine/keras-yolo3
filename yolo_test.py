@@ -8,7 +8,7 @@ import numpy as np
 
 FLAGS = None
 TEST_VIDEO = '/Users/pdevine/Documents/Mare/Videos/VTS_03_1.m4v'
-TEST_DIR = 'open-images-dataset/mare'
+TEST_DIR = '/media/bernal-tensor/full_VTS_03_01_images'
 OUTPUT_CSV = 'submit/output.csv'
 OUTPUT_DIR = 'submit'
 
@@ -37,6 +37,15 @@ def detect_test_imgs(yolo):
         if str_in.lower() == 'q':
             break
     yolo.close_session()
+
+def detect_write_img(yolo, src_path, out_path):
+    try:
+        image = Image.open(src_path)
+    except:
+        sys.exit('Cannot open image file: {}'.format(img_path))
+    else:
+        r_image = yolo.detect_image(image)
+        r_image.save(out_path)
 
 def train_test_video(yolo):
     global FLAGS
@@ -142,6 +151,20 @@ def train_test_imgs(yolo):
           f.write('</annotation>\n')
     yolo.close_session()
 
+def write_output_imgs(yolo):
+    global FLAGS
+    out_path = FLAGS.save
+    jpgs = [f for f in os.listdir(TEST_DIR) if f.endswith('.jpg')]
+        
+    for jpg in jpgs:
+        print(jpg)
+        img_path = os.path.join(TEST_DIR, jpg)
+        out_name = os.path.join(out_path, 'out_' + jpg)
+        print('img_path: {} out_path: {} jpg:{}'.format(img_path, out_name, jpg))
+        detect_write_img(yolo, img_path, out_name)
+
+    yolo.close_session()
+
 
 def get_classes(classes_path):
     '''loads the classes'''
@@ -192,6 +215,11 @@ if __name__ == '__main__':
         help='create image.xml files to do additional training via algorithm'
     )
 
+    parser.add_argument(
+        '--save', type=str,
+        help='Save new image files with annotations'
+    )
+
     FLAGS = parser.parse_args()
 
     if FLAGS.display:
@@ -206,5 +234,8 @@ if __name__ == '__main__':
     elif FLAGS.video:
         print("Training video: writing output to .xml files")
         train_test_video(YOLO(**vars(FLAGS)))
+    elif FLAGS.save:
+        print("Training mode: writing output to .xml files")
+        write_output_imgs(YOLO(**vars(FLAGS)))
     else:
         print("Please specify either Display, Submit, or train mode.")
