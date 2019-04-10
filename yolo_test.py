@@ -4,12 +4,14 @@ import argparse
 from yolo import YOLO, detect_video
 from PIL import Image
 import numpy as np
+import cv2
+import numpy as np
 
 
 FLAGS = None
-TEST_VIDEO = '/Users/pdevine/Documents/Mare/Videos/VTS_03_1.m4v'
-TEST_DIR = '/media/bernal-tensor/full_VTS_03_01_images'
-OUTPUT_CSV = 'submit/output.csv'
+TEST_VIDEO = '/media/bernal-tensor/520_1140_raw/520_1140.mp4'
+TEST_DIR = '/media/bernal-tensor/520_1140_raw'
+OUTPUT_CSV = 'submit/520_1140.csv'
 OUTPUT_DIR = 'submit'
 
 
@@ -49,8 +51,11 @@ def detect_write_img(yolo, src_path, out_path):
 
 def train_test_video(yolo):
     global FLAGS
-    
-    detect_video(yolo, TEST_VIDEO)
+    src_video = FLAGS.video
+    path, video_name = os.path.split(src_video)
+    base_name = video_name.split('.')[0]
+    outfile = path + '/{}_processed{}'.format(base_name, '.mp4')
+    detect_video(yolo, src_video, outfile)
     yolo.close_session()
 
 def infer_img(yolo, img_path):
