@@ -64,8 +64,8 @@ def _parse_function(filename):
 #/home/pdevine/keras-yolo3-v2/open-images-dataset/train/8d6e7c7f05dd136f.jpg 0,0,682,1023,148
 
 with open(outfilename, 'w') as outfile:
-    for filename in glob.glob('open-images-dataset/mare_hand_edit/*.xml'):
-        if filename == outfilename:
+    for filename in glob.glob(TRAIN_ANNOTATIONS):
+       if filename == outfilename:
             # don't want to copy the output into the output
             continue
         features = _parse_function(filename)
