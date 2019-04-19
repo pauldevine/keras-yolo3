@@ -28,7 +28,8 @@ class YOLO(object):
         "score" : 0.001,
         "iou" : 0.45,
         "model_image_size" : (416, 416),
-        "gpu_num" : 1,
+        "gpu_num" : 2,
+        "debug": False
     }
 
     @classmethod
@@ -177,7 +178,8 @@ class YOLO(object):
             boxed_image = letterbox_image(image, new_image_size)
         image_data = np.array(boxed_image, dtype='float32')
 
-        print(image_data.shape)
+        if self.debug:
+            print(image_data.shape)
         image_data /= 255.
         image_data = np.expand_dims(image_data, 0)  # Add batch dimension.
 
@@ -188,7 +190,7 @@ class YOLO(object):
                 self.input_image_shape: [image.size[1], image.size[0]],
                 K.learning_phase(): 0
             })
-
+        
         print('Found {} boxes for {}'.format(len(out_boxes), 'img'))
 
         font = ImageFont.truetype(font='font/FiraMono-Medium.otf',
@@ -209,7 +211,8 @@ class YOLO(object):
             left = max(0, np.floor(left + 0.5).astype('int32'))
             bottom = min(image.size[1], np.floor(bottom + 0.5).astype('int32'))
             right = min(image.size[0], np.floor(right + 0.5).astype('int32'))
-            print(label, (left, top), (right, bottom))
+            
+            print("    ", label, (left, top), (right, bottom))
 
             if top - label_size[1] >= 0:
                 text_origin = np.array([left, top - label_size[1]])
@@ -228,7 +231,8 @@ class YOLO(object):
             del draw
 
         end = timer()
-        print(end - start)
+        if self.debug:
+            print(end - start)
         return image
 
     def close_session(self):
@@ -245,7 +249,7 @@ def detect_video(yolo, video_path, output_path=""):
                         int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT)))
     isOutput = True if output_path != "" else False
     if isOutput:
-        print("!!! TYPE:", type(output_path), type(video_FourCC), type(video_fps), type(video_size))
+        print("!!! TYPE:", output_path, video_FourCC, video_fps, video_size)
         out = cv2.VideoWriter(output_path, video_FourCC, video_fps, video_size)
     accum_time = 0
     curr_fps = 0
