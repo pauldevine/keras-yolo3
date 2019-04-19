@@ -65,7 +65,7 @@ def _parse_function(filename):
 
 with open(outfilename, 'w') as outfile:
     for filename in glob.glob(TRAIN_ANNOTATIONS):
-       if filename == outfilename:
+        if filename == outfilename:
             # don't want to copy the output into the output
             continue
         features = _parse_function(filename)
