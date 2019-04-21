@@ -27,24 +27,31 @@ def _main():
 
     input_shape = (416,416) # multiple of 32, hw
     input_height, input_width = input_shape
+    other_shape = Input(shape=(416, 416, 3))
 
     model = create_model(input_shape, anchors, num_classes,
             freeze_body=0, weights_path=log2_dir+'trained_weights_final.h5')
 
-    coreml_model = coremltools.converters.keras.convert(
-            model,
-            input_names="image",
-            add_custom_layers=True,
-            custom_conversion_functions={ "Lambda": Lambda },
-            input_name_shape_dict={ input_shape: [1, input_height, input_width, 3] },
-            image_input_names=input_shape,
-            #output_feature_names=[bbox_output_tensor, class_output_tensor],
-            output_names=['bbox_output', 'class_output'],
-            is_bgr=False,
-            red_bias=-1.0,
-            green_bias=-1.0,
-            blue_bias=-1.0,
-            image_scale=1./255)
+    # coreml_model = coremltools.converters.keras.convert(
+    #         model,
+    #         input_names="image_data",
+    #         add_custom_layers=True,
+    #         custom_conversion_functions={ "Lambda": Lambda },
+    #         input_name_shape_dict = {1,416,416,3},
+    #         output_names=['out_boxes', 'out_scores', 'out_classes'],
+    #         is_bgr=False,
+    #         red_bias=-1.0,
+    #         green_bias=-1.0,
+    #         blue_bias=-1.0,
+    #         image_scale=1./255)
+
+    coreml_model = coremltools.converters.keras.convert(model, 
+              image_input_names='image_input',
+              output_names = ['output','output2'],
+              image_scale=1/255.,
+              custom_conversion_functions={ "Lambda": Lambda(yolo_loss, output_shape=(1,), name='yolo_loss',
+        arguments={'anchors': anchors, 'num_classes': num_classes, 'ignore_thresh': 0.5})(
+        [*model_body.output, *y_true]) })
 
     # Fill in the metadata and save the model.
     coreml_model.author = "Paul Devine"
@@ -73,7 +80,7 @@ def create_model(input_shape, anchors, num_classes, load_pretrained=True, freeze
             weights_path='model_data/yolo_weights.h5'):
     '''create the training model'''
     K.clear_session() # get a new session
-    image_input = Input(shape=(None, None, 3))
+    image_input = Input(shape=(416, 416, 3))
     h, w = input_shape
     num_anchors = len(anchors)
 
