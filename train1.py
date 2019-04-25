@@ -46,7 +46,7 @@ def _main():
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=3, verbose=1)
     early_stopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=10, verbose=1)
 
-    val_split = 0.1
+    val_split = 0.2
     with open(annotation_path) as f:
         lines = f.readlines()
     np.random.seed(10101)
