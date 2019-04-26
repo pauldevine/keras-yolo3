@@ -18,8 +18,9 @@ from yolo3.utils import get_random_data
 USE_DARKNET53 = True
 STAGE1_EPOCHS = 50
 STAGE2_EPOCHS = 100
-BATCH_SIZE_1 = 32
-BATCH_SIZE_2 = 6
+NUM_GPU = 2
+BATCH_SIZE_1 = 32 * NUM_GPU
+BATCH_SIZE_2 = 6 * NUM_GPU
 
 
 def _main():
@@ -57,13 +58,13 @@ def _main():
     num_val = 10000 if num_val > 10000 else num_val
     num_train = len(lines) - num_val
 
-    parallel_model=multi_gpu_model(model, gpus=2, cpu_relocation=True)
+    parallel_model=multi_gpu_model(model, gpus=NUM_GPU, cpu_relocation=True)
     # Train with frozen layers first, to get a stable loss.
     # Adjust num epochs to your dataset. This step is enough to obtain a not bad model.
     if True:
         parallel_model.compile(optimizer=Adam(lr=1e-3), loss={ 
-                # use custom yolo_loss Lambda layer. 
-                'yolo_loss': lambda y_true, y_pred: y_pred[0]})
+     # use custom yolo_loss Lambda layer. 
+     'yolo_loss': lambda y_true, y_pred: y_pred})
 
         batch_size = int(BATCH_SIZE_1)
         print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
@@ -81,7 +82,7 @@ def _main():
     if True:
         for i in range(len(model.layers)):
             model.layers[i].trainable = True
-        parallel_model.compile(optimizer=Adam(lr=1e-4), loss={'yolo_loss': lambda y_true, y_pred: y_pred[0]}) # recompile to apply the change
+        parallel_model.compile(optimizer=Adam(lr=1e-4), loss={'yolo_loss': lambda y_true, y_pred: y_pred}) # recompile to apply the change
         print('Unfreeze all of the layers.')
 
         batch_size = int(BATCH_SIZE_2) # note that more GPU memory is required after unfreezing the body
