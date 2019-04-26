@@ -2,13 +2,14 @@
 Retrain the YOLO model for your own dataset.
 """
 
+from time import time
 import numpy as np
 import keras.backend as K
 from keras.layers import Input, Lambda
 from keras.models import Model
 from keras.optimizers import SGD
 from sgd_accum import SGDAccum
-from keras.callbacks import TensorBoard, ModelCheckpoint, ReduceLROnPlateau, EarlyStopping
+from keras.callbacks import TensorBoard, ModelCheckpoint, ReduceLROnPlateau, EarlyStopping, TensorBoard
 from keras.utils import multi_gpu_model
 
 from yolo3.model import preprocess_true_boxes, yolo_body, tiny_yolo_body, yolo_loss
@@ -70,13 +71,14 @@ def _main():
             model.compile(optimizer=SGD(lr=MIN_LR), loss={'yolo_loss': lambda y_true, y_pred: y_pred}) # recompile to apply the change
 
         print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
+        tensorboard = TensorBoard(log_dir="logs/tb/{}".format(time()))
         model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes),
             steps_per_epoch=max(1, num_train//batch_size),
             validation_data=data_generator_wrapper(lines[num_train:], batch_size, input_shape, anchors, num_classes),
             validation_steps=max(1, num_val//batch_size),
             epochs=EPOCHS,
             initial_epoch=0,
-            callbacks=[logging, checkpoint, schedule])
+            callbacks=[logging, checkpoint, schedule, tensorboard])
         model.save_weights(log2_dir + 'trained_weights_final.h5')
 
     # Further training if needed.

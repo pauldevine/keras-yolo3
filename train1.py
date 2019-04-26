@@ -1,6 +1,7 @@
 """
 Retrain the YOLO model for your own dataset.
 """
+from time import time
 
 import numpy as np
 import keras.backend as K
@@ -9,6 +10,7 @@ from keras.models import Model
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, ModelCheckpoint, ReduceLROnPlateau, EarlyStopping
 from keras.utils import multi_gpu_model
+from keras.callbacks import TensorBoard
 
 from yolo3.model import preprocess_true_boxes, yolo_body, tiny_yolo_body, yolo_loss
 from yolo3.utils import get_random_data
@@ -62,6 +64,7 @@ def _main():
         model.compile(optimizer=Adam(lr=1e-3), loss={
             # use custom yolo_loss Lambda layer.
             'yolo_loss': lambda y_true, y_pred: y_pred})
+        tensorboard = TensorBoard(log_dir="logs/tb/{}".format(time()))
 
         batch_size = int(BATCH_SIZE_1)
         print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
@@ -71,7 +74,7 @@ def _main():
                 validation_steps=max(1, num_val//batch_size),
                 epochs=STAGE1_EPOCHS,
                 initial_epoch=0,
-                callbacks=[logging, checkpoint])
+                callbacks=[logging, checkpoint, tensorboard])
         model.save_weights(log_dir + 'trained_weights_stage_1.h5')
 
     # Unfreeze and continue training, to fine-tune.
@@ -90,7 +93,7 @@ def _main():
             validation_steps=max(1, num_val//batch_size),
             epochs=STAGE2_EPOCHS,
             initial_epoch=STAGE1_EPOCHS,
-            callbacks=[logging, checkpoint, reduce_lr, early_stopping])
+            callbacks=[logging, checkpoint, reduce_lr, early_stopping, tensorboard])
         model.save_weights(log_dir + 'trained_weights_stage_2.h5')
 
     # Further training if needed.
