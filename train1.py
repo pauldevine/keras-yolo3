@@ -3,6 +3,7 @@ Retrain the YOLO model for your own dataset.
 """
 
 import numpy as np
+import tensorflow as tf
 import keras.backend as K
 from keras.layers import Input, Lambda
 from keras.models import Model
@@ -10,13 +11,14 @@ from keras.optimizers import Adam
 from keras.callbacks import TensorBoard, ModelCheckpoint, ReduceLROnPlateau, EarlyStopping
 from keras.utils import multi_gpu_model
 
-from yolo3.model import preprocess_true_boxes, yolo_body, tiny_yolo_body, yolo_loss
+from yolo3.model import preprocess_true_boxes, yolo_body, tiny_yolo_body, yolo_loss, yolo_head
 from yolo3.utils import get_random_data
 
 
 USE_DARKNET53 = True
 STAGE1_EPOCHS = 50
 STAGE2_EPOCHS = 100
+NUM_GPU = 2
 BATCH_SIZE_1 = 32
 BATCH_SIZE_2 = 6
 
@@ -56,16 +58,17 @@ def _main():
     num_val = 10000 if num_val > 10000 else num_val
     num_train = len(lines) - num_val
 
+    parallel_model=multi_gpu_model(model, gpus=NUM_GPU, cpu_relocation=True)
     # Train with frozen layers first, to get a stable loss.
     # Adjust num epochs to your dataset. This step is enough to obtain a not bad model.
     if True:
-        model.compile(optimizer=Adam(lr=1e-3), loss={
-            # use custom yolo_loss Lambda layer.
-            'yolo_loss': lambda y_true, y_pred: y_pred})
+        parallel_model.compile(optimizer=Adam(lr=1e-3), loss={ 
+     # use custom yolo_loss Lambda layer. 
+     'yolo_loss': lambda y_true, y_pred: y_pred[0]})
 
         batch_size = int(BATCH_SIZE_1)
         print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
-        model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes),
+        parallel_model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes),
                 steps_per_epoch=max(1, num_train//batch_size),
                 validation_data=data_generator_wrapper(lines[num_train:], batch_size, input_shape, anchors, num_classes),
                 validation_steps=max(1, num_val//batch_size),
@@ -79,12 +82,12 @@ def _main():
     if True:
         for i in range(len(model.layers)):
             model.layers[i].trainable = True
-        model.compile(optimizer=Adam(lr=1e-4), loss={'yolo_loss': lambda y_true, y_pred: y_pred}) # recompile to apply the change
+        parallel_model.compile(optimizer=Adam(lr=1e-4), loss={'yolo_loss': lambda y_true, y_pred: y_pred[0]}) # recompile to apply the change
         print('Unfreeze all of the layers.')
 
         batch_size = int(BATCH_SIZE_2) # note that more GPU memory is required after unfreezing the body
         print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
-        model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes),
+        parallel_model.fit_generator(data_generator_wrapper(lines[:num_train], batch_size, input_shape, anchors, num_classes),
             steps_per_epoch=max(1, num_train//batch_size),
             validation_data=data_generator_wrapper(lines[num_train:], batch_size, input_shape, anchors, num_classes),
             validation_steps=max(1, num_val//batch_size),

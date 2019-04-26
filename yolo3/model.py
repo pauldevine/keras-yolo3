@@ -343,6 +343,8 @@ def box_iou(b1, b2):
 
 
 def yolo_loss(args, anchors, num_classes, ignore_thresh=.5, print_loss=False):
+    from yolo3.model import yolo_head, box_iou
+    import tensorflow as tf
     '''Return yolo_loss tensor
 
     Parameters
@@ -409,4 +411,4 @@ def yolo_loss(args, anchors, num_classes, ignore_thresh=.5, print_loss=False):
         loss += xy_loss + wh_loss + confidence_loss + class_loss
         if print_loss:
             loss = tf.Print(loss, [loss, xy_loss, wh_loss, confidence_loss, class_loss, K.sum(ignore_mask)], message='loss: ')
-    return loss
+    return K.expand_dims(loss, axis=0)
