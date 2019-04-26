@@ -39,7 +39,7 @@ def _main():
     model = create_model(input_shape, anchors, num_classes,
             freeze_body=0, weights_path=log1_dir+'trained_weights_stage_2.h5')
 
-    val_split = 0.1
+    val_split = 0.2
     with open(annotation_path) as f:
         lines = f.readlines()
     np.random.seed(10101)
