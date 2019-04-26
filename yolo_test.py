@@ -10,8 +10,8 @@ import numpy as np
 
 FLAGS = None
 TEST_VIDEO = '/media/bernal-tensor/520_1140_raw/520_1140.mp4'
-TEST_DIR = '/media/bernal-tensor/520_1140_raw'
-OUTPUT_CSV = 'submit/520_1140.csv'
+TEST_DIR = '/media/bernal-tensor/Video_4_Paul/517_1150_subset/'
+OUTPUT_CSV = 'submit/5517_1150.csv'
 OUTPUT_DIR = 'submit'
 
 
