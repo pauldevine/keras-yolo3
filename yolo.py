@@ -28,7 +28,7 @@ class YOLO(object):
         "score" : 0.001,
         "iou" : 0.45,
         "model_image_size" : (416, 416),
-        "gpu_num" : 1,
+        "gpu_num" : 2,
         "debug": False
     }
 
