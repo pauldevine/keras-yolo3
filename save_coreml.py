@@ -49,9 +49,7 @@ def _main():
               image_input_names='image_input',
               output_names = ['output','output2'],
               image_scale=1/255.,
-              custom_conversion_functions={ "Lambda": Lambda(yolo_loss, output_shape=(1,), name='yolo_loss',
-        arguments={'anchors': anchors, 'num_classes': num_classes, 'ignore_thresh': 0.5})(
-        [*model_body.output, *y_true]) })
+              custom_conversion_functions={ "Lambda": "Lambda" })
 
     # Fill in the metadata and save the model.
     coreml_model.author = "Paul Devine"

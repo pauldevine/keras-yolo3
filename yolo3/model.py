@@ -374,7 +374,7 @@ def yolo_loss(args, anchors, num_classes, ignore_thresh=.5, print_loss=False):
 
         grid, raw_pred, pred_xy, pred_wh = yolo_head(yolo_outputs[l],
              anchors[anchor_mask[l]], num_classes, input_shape, calc_loss=True)
-        pred_box = K.concatenate([pred_xy, pred_wh])
+        pred_box = K.add([pred_xy, pred_wh])
 
         # Darknet raw box to calculate loss.
         raw_true_xy = y_true[l][..., :2]*grid_shapes[l][::-1] - grid
