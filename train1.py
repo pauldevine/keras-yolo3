@@ -64,7 +64,7 @@ def _main():
     if True:
         parallel_model.compile(optimizer=Adam(lr=1e-3), loss={ 
      # use custom yolo_loss Lambda layer. 
-     'yolo_loss': lambda y_true, y_pred: y_pred})
+     'yolo_loss': lambda y_true, y_pred: y_pred[0]})
 
         batch_size = int(BATCH_SIZE_1)
         print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
@@ -82,7 +82,7 @@ def _main():
     if True:
         for i in range(len(model.layers)):
             model.layers[i].trainable = True
-        parallel_model.compile(optimizer=Adam(lr=1e-4), loss={'yolo_loss': lambda y_true, y_pred: y_pred}) # recompile to apply the change
+        parallel_model.compile(optimizer=Adam(lr=1e-4), loss={'yolo_loss': lambda y_true, y_pred: y_pred[0]}) # recompile to apply the change
         print('Unfreeze all of the layers.')
 
         batch_size = int(BATCH_SIZE_2) # note that more GPU memory is required after unfreezing the body
