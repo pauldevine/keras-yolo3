@@ -118,6 +118,11 @@ def tiny_yolo_body(inputs, num_anchors, num_classes):
 
     return Model(inputs, [y1,y2])
 
+def my_arange(start, stop=None, offset=0,step=1, dtype='int32'):
+    print('stop: {}, offset: {}, phrase: {}'.format(stop, offset, stop[offset]))
+    rng = np.arange(start, stop[offset], step, dtype)
+    print('range: {}'.format(rng))
+    return rng
 
 def yolo_head(feats, anchors, num_classes, input_shape, calc_loss=False):
     """Convert final layer features to bounding box parameters."""
@@ -126,9 +131,14 @@ def yolo_head(feats, anchors, num_classes, input_shape, calc_loss=False):
     anchors_tensor = K.reshape(K.constant(anchors), [1, 1, 1, num_anchors, 2])
 
     grid_shape = K.shape(feats)[1:3] # height, width
-    grid_y = K.tile(K.reshape(K.arange(0, stop=grid_shape[0]), [-1, 1, 1, 1]),
+    print('------grid_shape {} raw: {}'.format(grid_shape[0], K.int_shape(feats)[3]))
+    
+    stop_y=tf.py_func(my_arange, [0, grid_shape,0], tf.float64)  
+    stop_x=tf.py_func(my_arange, [0, grid_shape,1], tf.float64) 
+    print('stop_x: {}, stop_y: {}'.format(stop_x, stop_y))
+    grid_y = K.tile(K.reshape(stop_y, [-1, 1, 1, 1]),
         [1, grid_shape[1], 1, 1])
-    grid_x = K.tile(K.reshape(K.arange(0, stop=grid_shape[1]), [1, -1, 1, 1]),
+    grid_x = K.tile(K.reshape(stop_x, [1, -1, 1, 1]),
         [grid_shape[0], 1, 1, 1])
     grid = K.concatenate([grid_x, grid_y])
     grid = K.cast(grid, K.dtype(feats))

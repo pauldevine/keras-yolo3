@@ -7,8 +7,9 @@ import colorsys
 import os
 from timeit import default_timer as timer
 
+
 import numpy as np
-from keras import backend as K
+import keras.backend.tensorflow_backend as K
 from keras.models import load_model
 from keras.layers import Input
 from PIL import Image, ImageFont, ImageDraw
@@ -28,7 +29,7 @@ class YOLO(object):
         "score" : 0.001,
         "iou" : 0.45,
         "model_image_size" : (416, 416),
-        "gpu_num" : 2,
+        "gpu_num" : 0,
         "debug": False
     }
 
