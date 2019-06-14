@@ -9,7 +9,8 @@ from timeit import default_timer as timer
 
 
 import numpy as np
-import keras.backend.tensorflow_backend as K
+#import keras.backend.tensorflow_backend as K
+from keras import backend as K
 from keras.models import load_model
 from keras.layers import Input
 from PIL import Image, ImageFont, ImageDraw

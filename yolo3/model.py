@@ -118,9 +118,10 @@ def tiny_yolo_body(inputs, num_anchors, num_classes):
 
     return Model(inputs, [y1,y2])
 
-def my_arange(start, stop=None, offset=0,step=1, dtype='int32'):
-    print('stop: {}, offset: {}, phrase: {}'.format(stop, offset, stop[offset]))
-    rng = np.arange(start, stop[offset], step, dtype)
+def my_arange(start, inputTensor=None, offset=0,step=1, dtype='int32'):
+    #grid_shape = K.shape(inputTensor)[1:3] # height, width
+    print('stop: {}, offset: {}, phrase: {}'.format(inputTensor, offset, inputTensor[offset]))
+    rng = np.arange(start, inputTensor[offset], step, dtype)
     print('range: {}'.format(rng))
     return rng
 
@@ -130,11 +131,12 @@ def yolo_head(feats, anchors, num_classes, input_shape, calc_loss=False):
     # Reshape to batch, height, width, num_anchors, box_params.
     anchors_tensor = K.reshape(K.constant(anchors), [1, 1, 1, num_anchors, 2])
 
+    #grid_shape = K.shape(feats)[1:3] # height, width
+    #print('------grid_shape {} raw: {}'.format(grid_shape[0], K.int_shape(feats)[3]))
     grid_shape = K.shape(feats)[1:3] # height, width
-    print('------grid_shape {} raw: {}'.format(grid_shape[0], K.int_shape(feats)[3]))
-    
-    stop_y=tf.py_func(my_arange, [0, grid_shape,0], tf.float64)  
-    stop_x=tf.py_func(my_arange, [0, grid_shape,1], tf.float64) 
+    stop_y=tf.py_func(my_arange, [0, grid_shape,0], tf.int32)  
+    stop_x=tf.py_func(my_arange, [0, grid_shape,1], tf.int32) 
+
     print('stop_x: {}, stop_y: {}'.format(stop_x, stop_y))
     grid_y = K.tile(K.reshape(stop_y, [-1, 1, 1, 1]),
         [1, grid_shape[1], 1, 1])

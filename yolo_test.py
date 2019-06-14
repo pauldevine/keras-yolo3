@@ -1,8 +1,8 @@
 import os
 import sys
 import argparse
-import plaidml.keras
-plaidml.keras.install_backend()
+#import plaidml.keras
+#plaidml.keras.install_backend()
 
 from yolo import YOLO, detect_video
 from PIL import Image
