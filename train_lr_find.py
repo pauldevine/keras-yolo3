@@ -35,7 +35,7 @@ def _main():
     #model = create_model(input_shape, anchors, num_classes,
     #        freeze_body=2, weights_path='model_data/darknet53_weights.h5')
     model = create_model(input_shape, anchors, num_classes,
-            freeze_body=0, weights_path='/home/pdevine/keras-yolo3-v2/logs/002/trained_weights_final.h5')
+            freeze_body=0, weights_path='logs/002/trained_weights_final.h5')
 
     val_split = 0.1
     with open(annotation_path) as f:

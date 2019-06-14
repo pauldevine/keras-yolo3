@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import argparse
 from yolo import YOLO, detect_video
 from PIL import Image
@@ -10,7 +11,7 @@ import numpy as np
 
 FLAGS = None
 TEST_VIDEO = '/media/bernal-tensor/520_1140_raw/520_1140.mp4'
-TEST_DIR = '/media/bernal-tensor/Video_4_Paul/517_1150_subset/'
+TEST_DIR = '/home/pdevine/keras-yolo3-v1/webclip_509/'
 OUTPUT_CSV = 'submit/5517_1150.csv'
 OUTPUT_DIR = 'submit'
 
@@ -51,10 +52,16 @@ def detect_write_img(yolo, src_path, out_path):
 
 def train_test_video(yolo):
     global FLAGS
-    src_video = FLAGS.video
-    path, video_name = os.path.split(src_video)
-    base_name = video_name.split('.')[0]
-    outfile = path + '/{}_processed{}'.format(base_name, '.mp4')
+    if FLAGS.live:
+      src_video = FLAGS.video
+      path, video_name = os.path.split(src_video)
+      base_name = video_name.split('.')[0]
+      outfile = path + '/{}_processed{}'.format(base_name, '.mp4')
+    if FLAGS.live:
+      src_video = int(FLAGS.live)
+      timestr = time.strftime("%Y%m%d-%H%M%S")
+      outfile = '/Users/pdevine/live_recording{}{}'.format(timestr, '.mp4')
+    print('saving video to file: '.format(outfile))
     detect_video(yolo, src_video, outfile)
     yolo.close_session()
 
@@ -221,6 +228,11 @@ if __name__ == '__main__':
     )
 
     parser.add_argument(
+        '--live', type=int, default=0,
+        help='record from live video camera'
+    )
+
+    parser.add_argument(
         '--save', type=str,
         help='Save new image files with annotations'
     )
@@ -237,6 +249,9 @@ if __name__ == '__main__':
         print("Training mode: writing output to .xml files")
         train_test_imgs(YOLO(**vars(FLAGS)))
     elif FLAGS.video:
+        print("Training video: writing output to .xml files")
+        train_test_video(YOLO(**vars(FLAGS)))
+    elif FLAGS.live:
         print("Training video: writing output to .xml files")
         train_test_video(YOLO(**vars(FLAGS)))
     elif FLAGS.save:

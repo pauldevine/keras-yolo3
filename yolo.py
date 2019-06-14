@@ -28,7 +28,7 @@ class YOLO(object):
         "score" : 0.001,
         "iou" : 0.45,
         "model_image_size" : (416, 416),
-        "gpu_num" : 2,
+        "gpu_num" : 0,
         "debug": False
     }
 
@@ -269,10 +269,11 @@ def detect_video(yolo, video_path, output_path=""):
             accum_time = accum_time - 1
             fps = "FPS: " + str(curr_fps)
             curr_fps = 0
-        #cv2.putText(result, text=fps, org=(3, 15), fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-        #            fontScale=0.50, color=(255, 0, 0), thickness=2)
-        #cv2.namedWindow("result", cv2.WINDOW_NORMAL)
-        #cv2.imshow("result", result)
+        if isinstance(video_path,int):
+          cv2.putText(result, text=fps, org=(3, 15), fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                      fontScale=0.50, color=(255, 0, 0), thickness=2)
+          cv2.namedWindow("result", cv2.WINDOW_NORMAL)
+          cv2.imshow("result", result)
         if isOutput:
             out.write(result)
         if cv2.waitKey(1) & 0xFF == ord('q'):
