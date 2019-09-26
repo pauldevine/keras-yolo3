@@ -27,14 +27,14 @@ EPOCHS = 100
 BATCH_SIZE = 6
 USE_SGDAccum = False
 ACCUM_ITERS = 8
-GEN_COREML = True
+GEN_COREML = False
 
 
 def _main():
-    annotation_path = 'mare_train.txt'
-    log1_dir = 'logs/mare/'
+    annotation_path = 'train.txt'
+    log1_dir = 'logs/001/'
     log2_dir = 'logs/002/'
-    classes_path = 'model_data/mare_classes.txt'
+    classes_path = 'model_data/openimgs_classes.txt'
     anchors_path = 'model_data/yolo_anchors.txt'
     class_names = get_classes(classes_path)
     print("CLASS NAMES: " + str(class_names))

@@ -6,7 +6,7 @@ from PIL import Image
 
 
 FLAGS = None
-TEST_DIR = 'open-images-dataset/kaggle-2018-object-detection/test_challenge_2018'
+TEST_DIR = '/media/bernal-tensor/open-new/'
 OUTPUT_CSV = 'submit/output.csv'
 OUTPUT_DIR = 'submit'
 

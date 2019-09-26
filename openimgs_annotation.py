@@ -39,8 +39,8 @@ def get_annotations(annotation_path, cls_list):
 
 
 def main():
-    cls_list, cls_desc = get_class_descriptions('open-images-dataset/kaggle-2018-object-detection/challenge-2018-class-descriptions-500.csv')
-    ids, annotations = get_annotations('open-images-dataset/kaggle-2018-object-detection/challenge-2018-train-annotations-bbox.csv', cls_list)
+    cls_list, cls_desc = get_class_descriptions('open-images-dataset/kaggle-2019-object-detection/challenge-2019-classes-description-500.csv')
+    ids, annotations = get_annotations('open-images-dataset/kaggle-2019-object-detection/challenge-2019-train-detection-bbox.csv', cls_list)
     ### for testing
     #ids = ['8d6dec80235b6fea']
     #annotations = [{'id': '8d6dec80235b6fea', 'label': '/m/09j5n',
@@ -48,7 +48,7 @@ def main():
     #                'x0': 0.760000, 'x1': 0.778125,
     #                'y0': 0.645892, 'y1': 0.673277}]
 
-    with open('kaggle_2018_train.txt', 'w') as f:
+    with open('kaggle_2019_train.txt', 'w') as f:
 
         def write_line(img_id, img_annos):
             img_path = 'open-images-dataset/train/{}.jpg'.format(img_id)

@@ -8,19 +8,21 @@ import os
 from timeit import default_timer as timer
 
 import numpy as np
-from keras import backend as K
-from keras.models import load_model
-from keras.layers import Input
+import tensorflow as tf
+from tensorflow.keras import backend as K
+from tensorflow.keras.models import load_model
+from tensorflow.keras.layers import Input
+
 from PIL import Image, ImageFont, ImageDraw
 
 from yolo3.model import yolo_eval, yolo_body
 from yolo3.utils import letterbox_image
-from keras.utils import multi_gpu_model
+from tensorflow.keras.utils import multi_gpu_model
 
 class YOLO(object):
     _defaults = {
         #"model_path": 'model_data/yolo.h5',
-        "model_path": 'logs/002/trained_weights_final.h5',
+        "model_path": 'model_data/trained_weights_final.h5',
         "anchors_path": 'model_data/yolo_anchors.txt',
         "classes_path": 'model_data/openimgs_classes.txt',
         "codes_path": 'model_data/openimgs_codes.txt',
@@ -45,7 +47,7 @@ class YOLO(object):
         self.class_codes = self._get_codes()
         assert len(self.class_names) == len(self.class_codes)
         self.anchors = self._get_anchors()
-        self.sess = K.get_session()
+        self.sess = tf.compat.v1.keras.backend.get_session()
         self.boxes, self.scores, self.classes = self.generate()
 
     def _get_class(self):

@@ -17,16 +17,16 @@ from yolo3.utils import get_random_data
 
 
 USE_DARKNET53 = True
-STAGE1_EPOCHS = 12
-STAGE2_EPOCHS = 24
+STAGE1_EPOCHS = 1
+STAGE2_EPOCHS = 2
 BATCH_SIZE_1 = 32
 BATCH_SIZE_2 = 6
 
 
 def _main():
-    annotation_path = 'mare_train.txt'
-    log_dir = 'logs/mare/'
-    classes_path = 'model_data/mare_classes.txt'
+    annotation_path = 'train.txt'
+    log_dir = 'logs/001/'
+    classes_path = 'model_data/openimgs_classes.txt'
     anchors_path = 'model_data/yolo_anchors.txt'
     class_names = get_classes(classes_path)
     num_classes = len(class_names)
